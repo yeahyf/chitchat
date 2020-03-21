@@ -49,13 +49,13 @@ type server struct {
 type hConnerServer struct {
 	conn     net.Conn //网络连接对象
 	d        byte
-	mu       *sync.Mutex //同步对象
-	readfunc ServerReadFunc 读取方法
+	mu       *sync.Mutex    //同步对象
+	readfunc ServerReadFunc //读取方法
 }
 
 //构建一个新的服务器
 func NewServer(
-	ipaddrsocket string,delim byte, readfunc ServerReadFunc,
+	ipaddrsocket string, delim byte, readfunc ServerReadFunc,
 	additional interface{}) Server {
 
 	s := &server{
