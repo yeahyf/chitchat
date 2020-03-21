@@ -8,52 +8,55 @@ import (
 	"time"
 )
 
+//服务器读取客户端发送过来数据的方法定义
 type ServerReadFunc func([]byte, ReadFuncer) error
 
+//定义了一个服务器的行为
 type Server interface {
-	Listen() error
-	Cut() error
-	CloseRemote(string) error
-	RangeRemoteAddr() []string
-	GetLocalAddr() string
-	SetDeadLine(time.Duration, time.Duration)
-	ErrChan() <-chan Errsocket
-	Write(interface{}) error
+	Listen() error                            //监听
+	Cut() error                               //关闭所有连接，停止服务
+	CloseRemote(string) error                 //关闭远程连接
+	RangeRemoteAddr() []string                //处理远程ip地址
+	GetLocalAddr() string                     //获取本地地址
+	SetDeadLine(time.Duration, time.Duration) //设置超时时间
+	ErrChan() <-chan Errsocket                //发送错误信息的通道
+	Write(interface{}) error                  //写回数据
 }
 
+//定义一个服务器
 type server struct {
 	//unchangable data
-	ipaddr   string
-	readDDL  time.Duration
-	writeDDL time.Duration
+	ipaddr   string        //ip地址
+	readDDL  time.Duration //读超时时间
+	writeDDL time.Duration //写超时时间
 	//if delimiter is 0, then read until it's EOF
-	delimiter byte
-	readfunc  ServerReadFunc
-
-	remoteMap *sync.Map
+	delimiter byte           //数据包的分隔符号
+	readfunc  ServerReadFunc //读取数据的方法
+	remoteMap *sync.Map      //远程连接的列表
 
 	//under protected data
 	eDer
 	eDerfunc eDinitfunc
 
 	l          net.Listener
-	cancelfunc context.CancelFunc //cancelfunc for cancel listener(CUT)
+	cancelfunc context.CancelFunc //TODO //cancelfunc for cancel listener(CUT)
 
 	//tempory used for readfunc
-	currentConn net.Conn
-	additional  interface{}
+	currentConn net.Conn    //持有的网络连接对象
+	additional  interface{} //其他需要扩展的信息
 }
 
 type hConnerServer struct {
-	conn     net.Conn
+	conn     net.Conn //网络连接对象
 	d        byte
-	mu       *sync.Mutex
-	readfunc ServerReadFunc
+	mu       *sync.Mutex //同步对象
+	readfunc ServerReadFunc 读取方法
 }
 
+//构建一个新的服务器
 func NewServer(
-	ipaddrsocket string,
-	delim byte, readfunc ServerReadFunc, additional interface{}) Server {
+	ipaddrsocket string,delim byte, readfunc ServerReadFunc,
+	additional interface{}) Server {
 
 	s := &server{
 		ipaddr:    ipaddrsocket,
